@@ -5,12 +5,14 @@ import { ofetch } from 'ofetch';
 let envs = process.env;
 
 export type Config = {
+    // app config
     disallowRobot: boolean;
     enableCluster?: string;
     isPackage: boolean;
     nodeName?: string;
     puppeteerWSEndpoint?: string;
     chromiumExecutablePath?: string;
+    // network
     connect: {
         port: number;
     };
@@ -20,6 +22,7 @@ export type Config = {
     ua: string;
     trueUA: string;
     allowOrigin?: string;
+    // cache
     cache: {
         type: string;
         requestTimeout: number;
@@ -32,6 +35,7 @@ export type Config = {
     redis: {
         url: string;
     };
+    // proxy
     proxyUri?: string;
     proxy: {
         protocol?: string;
@@ -43,7 +47,9 @@ export type Config = {
     };
     pacUri?: string;
     pacScript?: string;
+    // access control
     accessKey?: string;
+    // logging
     debugInfo: string;
     loggerLevel: string;
     noLogfiles?: boolean;
@@ -56,6 +62,8 @@ export type Config = {
         dsn?: string;
         routeTimeout: number;
     };
+    enableRemoteDebugging?: boolean;
+    // feed config
     hotlink: {
         template?: string;
         includePaths?: string[];
@@ -78,6 +86,8 @@ export type Config = {
         promptTitle: string;
         promptDescription: string;
     };
+
+    // Route-specific Configurations
     bilibili: {
         cookies: Record<string, string | undefined>;
         dmImgList?: string;
@@ -241,6 +251,9 @@ export type Config = {
     };
     notion: {
         key?: string;
+    };
+    patreon: {
+        sessionId?: string;
     };
     pianyuan: {
         cookie?: string;
@@ -426,7 +439,6 @@ const calculateValue = () => {
         requestTimeout: toInt(envs.REQUEST_TIMEOUT, 30000), // Milliseconds to wait for the server to end the response before aborting the request
         ua: envs.UA ?? (toBoolean(envs.NO_RANDOM_UA, false) ? TRUE_UA : randUserAgent({ browser: 'chrome', os: 'mac os', device: 'desktop' })),
         trueUA: TRUE_UA,
-        // cors request
         allowOrigin: envs.ALLOW_ORIGIN,
         // cache
         cache: {
@@ -470,6 +482,7 @@ const calculateValue = () => {
             dsn: envs.SENTRY,
             routeTimeout: toInt(envs.SENTRY_ROUTE_TIMEOUT, 30000),
         },
+        enableRemoteDebugging: toBoolean(envs.ENABLE_REMOTE_DEBUGGING, false),
         // feed config
         hotlink: {
             template: envs.HOTLINK_TEMPLATE,
@@ -659,6 +672,9 @@ const calculateValue = () => {
         },
         notion: {
             key: envs.NOTION_TOKEN,
+        },
+        patreon: {
+            sessionId: envs.PATREON_SESSION_ID,
         },
         pianyuan: {
             cookie: envs.PIANYUAN_COOKIE,
