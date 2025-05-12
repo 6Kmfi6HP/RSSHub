@@ -8,6 +8,7 @@ WORKDIR /app
 ARG USE_CHINA_NPM_REGISTRY=0
 RUN \
     set -ex && \
+    npm install -g corepack@latest && \
     corepack enable pnpm && \
     if [ "$USE_CHINA_NPM_REGISTRY" = 1 ]; then \
         echo 'use npm mirror' && \
@@ -17,6 +18,7 @@ RUN \
     fi;
 
 COPY ./tsconfig.json /app/
+COPY ./patches /app/patches
 COPY ./pnpm-lock.yaml /app/
 COPY ./package.json /app/
 
@@ -102,7 +104,8 @@ RUN \
         fi; \
         echo 'Downloading Chromium...' && \
         unset PUPPETEER_SKIP_DOWNLOAD && \
-        corepack enable pnpm && \
+        npm install -g corepack@latest && \
+        corepack use pnpm@latest-9 && \
         pnpm add puppeteer@$(cat /app/.puppeteer_version) --save-prod && \
         pnpm rb ; \
     else \

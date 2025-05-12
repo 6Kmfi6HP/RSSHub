@@ -1,6 +1,6 @@
 import { Route, ViewType } from '@/types';
 import cache from '@/utils/cache';
-import querystring from 'querystring';
+import querystring from 'node:querystring';
 import { getUser, renderNotesFulltext, getUserWithCookie } from './util';
 import InvalidParameterError from '@/errors/types/invalid-parameter';
 import { config } from '@/config';
@@ -97,7 +97,7 @@ async function getUserFeeds(url: string, category: string) {
         notes.flatMap((n) =>
             n.map(({ id, noteCard }) => ({
                 title: noteCard.displayTitle,
-                link: `${url}/${noteCard.noteId || id}`,
+                link: new URL(noteCard.noteId || id, url).toString(),
                 guid: noteCard.noteId || id || noteCard.displayTitle,
                 description: `<img src ="${noteCard.cover.infoList.pop().url}"><br>${noteCard.displayTitle}`,
                 author: noteCard.user.nickname,

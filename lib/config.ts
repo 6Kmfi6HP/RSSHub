@@ -86,6 +86,12 @@ export type Config = {
         promptTitle: string;
         promptDescription: string;
     };
+    follow: {
+        ownerUserId?: string;
+        description?: string;
+        price?: number;
+        userLimit?: number;
+    };
 
     // Route-specific Configurations
     bilibili: {
@@ -158,6 +164,10 @@ export type Config = {
     game4399: {
         cookie?: string;
     };
+    gelbooru: {
+        apiKey?: string;
+        userId?: string;
+    };
     github: {
         access_token?: string;
     };
@@ -193,6 +203,9 @@ export type Config = {
     };
     javdb: {
         session?: string;
+    };
+    jumeili: {
+        cookie?: string;
     };
     keylol: {
         cookie?: string;
@@ -231,6 +244,9 @@ export type Config = {
     miniflux: {
         instance?: string;
         token?: string;
+    };
+    misskey: {
+        accessToken?: string;
     };
     mox: {
         cookie: string;
@@ -279,6 +295,7 @@ export type Config = {
     };
     saraba1st: {
         cookie?: string;
+        host?: string;
     };
     sehuatang: {
         cookie?: string;
@@ -398,7 +415,7 @@ const toBoolean = (value: string | undefined, defaultValue: boolean) => {
     }
 };
 
-const toInt = (value: string | undefined, defaultValue: number) => (value === undefined ? defaultValue : Number.parseInt(value));
+const toInt = (value: string | undefined, defaultValue?: number) => (value === undefined ? defaultValue : Number.parseInt(value));
 
 const calculateValue = () => {
     const bilibili_cookies: Record<string, string | undefined> = {};
@@ -510,6 +527,12 @@ const calculateValue = () => {
             promptDescription: envs.OPENAI_PROMPT || 'Please summarize the following article and reply with markdown format.',
             promptTitle: envs.OPENAI_PROMPT_TITLE || 'Please translate the following title into Simplified Chinese and reply only translated text.',
         },
+        follow: {
+            ownerUserId: envs.FOLLOW_OWNER_USER_ID,
+            description: envs.FOLLOW_DESCRIPTION,
+            price: toInt(envs.FOLLOW_PRICE),
+            userLimit: toInt(envs.FOLLOW_USER_LIMIT),
+        },
 
         // Route-specific Configurations
         bilibili: {
@@ -582,6 +605,10 @@ const calculateValue = () => {
         game4399: {
             cookie: envs.GAME_4399,
         },
+        gelbooru: {
+            apiKey: envs.GELBOORU_API_KEY,
+            userId: envs.GELBOORU_USER_ID,
+        },
         github: {
             access_token: envs.GITHUB_ACCESS_TOKEN,
         },
@@ -595,7 +622,6 @@ const calculateValue = () => {
             cookies: envs.GUOZAOKE_COOKIES,
         },
         hefeng: {
-            // weather
             key: envs.HEFENG_KEY,
         },
         infzm: {
@@ -618,6 +644,9 @@ const calculateValue = () => {
         },
         javdb: {
             session: envs.JAVDB_SESSION,
+        },
+        jumeili: {
+            cookie: envs.JUMEILI_COOKIE,
         },
         keylol: {
             cookie: envs.KEYLOL_COOKIE,
@@ -656,6 +685,9 @@ const calculateValue = () => {
         miniflux: {
             instance: envs.MINIFLUX_INSTANCE || 'https://reader.miniflux.app',
             token: envs.MINIFLUX_TOKEN || '',
+        },
+        misskey: {
+            accessToken: envs.MISSKEY_ACCESS_TOKEN,
         },
         mox: {
             cookie: envs.MOX_COOKIE,
@@ -704,6 +736,7 @@ const calculateValue = () => {
         },
         saraba1st: {
             cookie: envs.SARABA1ST_COOKIE,
+            host: envs.SARABA1ST_HOST || 'https://stage1st.com',
         },
         sehuatang: {
             cookie: envs.SEHUATANG_COOKIE,
