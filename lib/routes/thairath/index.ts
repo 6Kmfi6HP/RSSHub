@@ -5,20 +5,226 @@ import { parseDate } from '@/utils/parse-date';
 import ofetch from '@/utils/ofetch';
 import type { Context } from 'hono';
 
-interface NewsItem {
+interface NewsImage {
+    thumbnail?: string;
+    square?: string;
+    panorama?: string;
+}
+
+interface ParentTopic {
+    title?: string;
+    titleEn?: string;
+    path?: string;
+}
+
+interface BreadcrumbItem {
+    page?: string;
+    pageEn?: string;
+    link?: string;
+    level?: string;
+    title?: string;
+    titleEn?: string;
+    path?: string;
+}
+
+interface ImageSML {
+    small?: string;
+    medium?: string;
+    large?: string;
+}
+
+interface ThumbnailImage {
+    EntityType?: number;
+    display?: string;
+    video?: any;
+    image?: string;
+    shareImage?: string;
+    shareImage_webp?: string;
+    imageSML?: ImageSML;
+    imageAvif?: {
+        display?: string;
+        image?: string;
+        shareImage?: string;
+    };
+}
+
+interface ContentWidget {
+    topview?: Array<{
+        id: number;
+        type: number;
+        viewCount: number;
+        title: string;
+        abstract: string;
+        tags: any[];
+        fullpath: string;
+        thumbnail: string;
+    }>;
+    hotnews?: Array<{
+        id: number;
+        type: string;
+        title: string;
+        section: string;
+        sectionEn: string;
+        topic: string;
+        topicEn: string;
+        topicPath: string;
+        fullPath: string;
+        abstract: string;
+        publishTime: string;
+        publishTimeTh: string;
+        showTime: string;
+        canonical: string;
+        premiumType: string;
+        image: {
+            jpg: string;
+            webp: string;
+        };
+    }>;
+    hotClips?: Array<{
+        id: number;
+        type: string;
+        section: string;
+        sectionEn: string;
+        title: string;
+        topic: string;
+        topicEn: string;
+        abstract: string;
+        topicPath: string;
+        fullPath: string;
+        publishTime: string;
+        publishTimeTh: string;
+        showTime: string;
+        image: {
+            jpg: string;
+            webp: string;
+        };
+        duration: string;
+        canonical: string;
+        youtubeId: any;
+        source: string;
+        props: {
+            ratio: string;
+            showAd: boolean;
+            jwplayer: any;
+            topic: string;
+            type: string;
+            program: string;
+            channel: string;
+            srcPath: string;
+            byteplusId: string;
+        };
+        program: {
+            name: string;
+            url: string;
+        };
+    }>;
+}
+
+interface DetailedArticleItem {
     id: number;
     title: string;
-    abstract: string;
-    publishTime: string;
-    fullPath: string;
-    credit?: string;
+    type: number;
+    subType?: string;
     sourceFrom?: string;
-    tags?: string[];
+    entityType?: number;
+    sectionId?: string;
+    section?: string;
+    sectionEn?: string;
+    topicId?: string;
+    topic?: string;
+    topicEn?: string;
+    contentarea?: any;
+    contentareaEn?: any;
+    topicPath?: string;
+    fullPath: string;
+    categoryName?: any;
+    categoryNameEn?: any;
+    categoryFullPath?: any;
+    categoryFullPathTh?: any;
+    breadcrumb?: BreadcrumbItem[];
+    thumbnail?: ThumbnailImage;
+    abstract?: string;
     image?: string;
+    imageSML?: ImageSML;
+    content?: string;
+    embeds?: any[];
+    hasVideo?: any;
+    Gallery?: any[];
+    tags?: string[];
+    publishTime: string;
+    publishTimeTh?: string;
+    viewCount?: number;
+    credit?: string;
+    canonical?: string;
+    layout?: {
+        readmore?: boolean;
+        theme?: string;
+    };
+    related_id?: any[];
+    relates?: any[];
+    factcheck?: any;
+    premiumType?: string;
+    followTopic?: any;
+    writer?: any;
+    storytelling?: string;
+    creator_id?: number;
+    team_id?: number;
+    character?: number;
+    migrationByApi?: boolean;
+    logoSponsor?: any[];
+    contentwidget?: ContentWidget;
+    similar?: string;
+    recommended?: string;
+    contextual?: any;
+    policy_ads?: string;
+    voice?: boolean;
+    nextContent?: any[];
+    previousContent?: any[];
+    videoReco?: any[];
+}
+
+interface NewsItem {
+    id: number;
+    _id?: string;
+    type?: number;
+    title: string;
+    abstract?: string;
+    content?: string;
+    sourceFrom?: string;
+    credit?: string;
+    label?: any[];
+    section?: string;
+    sectionEn?: string;
+    topic?: string;
+    topicEn?: string;
+    topicPath?: string;
+    parentTopic?: ParentTopic;
+    tags?: string[];
+    publishTs?: number;
+    publishTime: string;
+    publishTimeTh?: string;
+    image?: string;
+    image_medium?: string;
+    image_large?: string;
+    fullPath: string;
+    canonical?: string;
+    premiumType?: string;
+    images?: NewsImage;
+    props?: {
+        highlights?: Record<string, string>;
+        showAd?: boolean;
+        jwplayer?: any;
+        topic?: string;
+        program?: string;
+        channel?: string;
+        srcPath?: string;
+        byteplusId?: string;
+    };
     coverImage?: {
         url?: string;
     };
-    content?: string;
+    imageSML?: ImageSML;
+    thumbnail?: ThumbnailImage;
 }
 
 interface NewsData {
@@ -30,6 +236,9 @@ interface NewsData {
     breakingNews?: NewsItem[];
     popular?: NewsItem[];
     loadmore?: NewsItem[];
+    video?: NewsItem[];
+    column?: NewsItem[];
+    pr?: NewsItem[];
 }
 
 export const route: Route = {
@@ -112,6 +321,58 @@ function cleanHtmlContent(content = '') {
     return $.html();
 }
 
+// Get the best available image from different possible sources
+function getBestImage(item: NewsItem | DetailedArticleItem) {
+    // First try specific image paths from the thumbnail
+    if ('thumbnail' in item && item.thumbnail) {
+        if (item.thumbnail.shareImage) {
+            return item.thumbnail.shareImage;
+        }
+        if (item.thumbnail.image) {
+            return item.thumbnail.image;
+        }
+    }
+
+    // Try the images object for list page items
+    if ('images' in item && item.images) {
+        if (item.images.panorama) {
+            return item.images.panorama;
+        }
+        if (item.images.square) {
+            return item.images.square;
+        }
+        if (item.images.thumbnail) {
+            return item.images.thumbnail;
+        }
+    }
+
+    // Try imageSML for detail page items
+    if (item.imageSML) {
+        if (item.imageSML.large) {
+            return item.imageSML.large;
+        }
+        if (item.imageSML.medium) {
+            return item.imageSML.medium;
+        }
+        if (item.imageSML.small) {
+            return item.imageSML.small;
+        }
+    }
+
+    // Fall back to standard image field
+    if (item.image) {
+        return item.image;
+    }
+
+    // Try coverImage for list items
+    if ('coverImage' in item && item.coverImage && item.coverImage.url) {
+        return item.coverImage.url;
+    }
+
+    // If nothing found
+    return '';
+}
+
 async function handler(ctx: Context): Promise<Data> {
     const category = ctx.req.param('category') || '';
     const subcategory = ctx.req.param('subcategory') || '';
@@ -166,9 +427,10 @@ async function handler(ctx: Context): Promise<Data> {
     // Check different possible locations of news data
     const newsState = jsonData.props?.initialState?.news?.data;
     const contentState = jsonData.props?.initialState?.content?.data;
+    const commonState = jsonData.props?.initialState?.common?.data;
 
     if (newsState?.items) {
-        // For list pages
+        // For news category pages
         const items = newsState.items as NewsData;
         newsList = [
             ...(items.highlight || []),
@@ -179,29 +441,77 @@ async function handler(ctx: Context): Promise<Data> {
             ...(items.breakingNews || []),
             ...(items.popular || []),
             ...(items.loadmore || []),
+            ...(items.video || []),
+            ...(items.column || []),
+            ...(items.pr || []),
+        ];
+    } else if (commonState?.items) {
+        // For homepage or other section pages
+        const items = commonState.items as NewsData;
+        newsList = [
+            ...(items.highlight || []),
+            ...(items.panorama || []),
+            ...(items.scoop || []),
+            ...(items.toplasted || []),
+            ...(items.lastestNews || []),
+            ...(items.breakingNews || []),
+            ...(items.popular || []),
+            ...(items.loadmore || []),
+            ...(items.video || []),
+            ...(items.column || []),
+            ...(items.pr || []),
         ];
     } else if (contentState?.items) {
-        // For article pages (redirecting to list)
-        // Get image URL from coverImage if available
-        const coverImageUrl = contentState.items.coverImage?.url || contentState.items.image;
+        // For article pages
+        const articleItem = contentState.items as DetailedArticleItem;
+
+        // Get the best image from thumbnail or other sources
+        const imageUrl = getBestImage(articleItem);
 
         // Create image HTML if image exists
-        const imageHtml = coverImageUrl ? `<p><img src="${coverImageUrl}" alt="${contentState.items.title || 'Thairath News'}" referrerpolicy="no-referrer" /></p>` : '';
+        const imageHtml = imageUrl ? `<p><img src="${imageUrl}" alt="${articleItem.title || 'Thairath News'}" referrerpolicy="no-referrer" /></p>` : '';
 
         // 清理文章内容
-        const cleanedContent = cleanHtmlContent(contentState.items.content) || contentState.items.abstract;
+        const cleanedContent = cleanHtmlContent(articleItem.content) || articleItem.abstract || '';
 
         const item: DataItem = {
-            title: contentState.items.title,
+            title: articleItem.title,
             description: `${imageHtml}${cleanedContent}`,
-            pubDate: parseDate(contentState.items.publishTime),
+            pubDate: parseDate(articleItem.publishTime),
             link: url,
-            author: contentState.items.credit || contentState.items.sourceFrom,
-            category: contentState.items.tags,
+            author: articleItem.credit || articleItem.sourceFrom,
+            category: articleItem.tags,
         };
 
         return {
-            title: `Thairath - ${contentState.items.title || 'News'}`,
+            title: `Thairath - ${articleItem.title || 'News'}`,
+            link: url,
+            item: [item],
+        };
+    } else if (jsonData.props?.initialProps?.pageProps?.items) {
+        // For article pages with a different structure
+        const articleItem = jsonData.props.initialProps.pageProps.items as DetailedArticleItem;
+
+        // Get the best image from thumbnail or other sources
+        const imageUrl = getBestImage(articleItem);
+
+        // Create image HTML if image exists
+        const imageHtml = imageUrl ? `<p><img src="${imageUrl}" alt="${articleItem.title || 'Thairath News'}" referrerpolicy="no-referrer" /></p>` : '';
+
+        // 清理文章内容
+        const cleanedContent = cleanHtmlContent(articleItem.content) || articleItem.abstract || '';
+
+        const item: DataItem = {
+            title: articleItem.title,
+            description: `${imageHtml}${cleanedContent}`,
+            pubDate: parseDate(articleItem.publishTime),
+            link: url,
+            author: articleItem.credit || articleItem.sourceFrom,
+            category: articleItem.tags,
+        };
+
+        return {
+            title: `Thairath - ${articleItem.title || 'News'}`,
             link: url,
             item: [item],
         };
@@ -212,7 +522,7 @@ async function handler(ctx: Context): Promise<Data> {
 
     // Fetch full article content for each item
     const items: DataItem[] = await Promise.all(
-        newsList.slice(0, 15).map(async (item) => {
+        newsList.slice(0, 50).map(async (item) => {
             const articleUrl = `${baseUrl}${item.fullPath}`;
 
             const cachedItem = await cache.tryGet(`thairath:${item.id}`, async () => {
@@ -226,14 +536,14 @@ async function handler(ctx: Context): Promise<Data> {
                         const articleContent = articleJsonData.props?.initialState?.content?.data?.items;
 
                         if (articleContent) {
-                            // Get image URL from coverImage if available, fallback to item.image
-                            const imageUrl = articleContent.coverImage?.url || articleContent.image || item.coverImage?.url || item.image;
+                            // Get the best image from various sources
+                            const imageUrl = getBestImage(articleContent);
 
                             // Create image HTML if image exists
                             const imageHtml = imageUrl ? `<p><img src="${imageUrl}" alt="${articleContent.title}" referrerpolicy="no-referrer" /></p>` : '';
 
                             // 清理文章内容
-                            const cleanedContent = cleanHtmlContent(articleContent.content) || articleContent.abstract;
+                            const cleanedContent = cleanHtmlContent(articleContent.content) || articleContent.abstract || '';
 
                             return {
                                 title: articleContent.title,
@@ -247,12 +557,12 @@ async function handler(ctx: Context): Promise<Data> {
                     }
 
                     // Fallback if article data cannot be extracted
-                    const imageUrl = item.coverImage?.url || item.image;
+                    const imageUrl = getBestImage(item);
                     const imageHtml = imageUrl ? `<p><img src="${imageUrl}" alt="${item.title}" referrerpolicy="no-referrer" /></p>` : '';
 
                     return {
                         title: item.title,
-                        description: `${imageHtml}${item.abstract}`,
+                        description: `${imageHtml}${item.abstract || ''}`,
                         pubDate: parseDate(item.publishTime),
                         link: articleUrl,
                         author: item.credit || item.sourceFrom,
@@ -260,12 +570,12 @@ async function handler(ctx: Context): Promise<Data> {
                     };
                 } catch {
                     // If article fetch fails, return basic info with image if available
-                    const imageUrl = item.coverImage?.url || item.image;
+                    const imageUrl = getBestImage(item);
                     const imageHtml = imageUrl ? `<p><img src="${imageUrl}" alt="${item.title}" referrerpolicy="no-referrer" /></p>` : '';
 
                     return {
                         title: item.title,
-                        description: `${imageHtml}${item.abstract}`,
+                        description: `${imageHtml}${item.abstract || ''}`,
                         pubDate: parseDate(item.publishTime),
                         link: articleUrl,
                         author: item.credit || item.sourceFrom,
